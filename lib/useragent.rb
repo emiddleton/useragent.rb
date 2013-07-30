@@ -1,20 +1,18 @@
 require 'yaml'
-#require 'debugger'
-#ua=YAML.load_file('./useragent.yml')
 
 class UserAgent
   class OperatingSystem
     @@operating_systems = {}
-  
+
     attr_reader :id, :key, :name
-  
+
     def self.load(ua)
       @@manufacturers = ua['manufacturers']
       ua['operating_systems'].each do |name,operating_system|
         load_operating_system(name,operating_system)
       end
     end
-  
+
     def self.load_operating_system(name,operating_system)
       b = OperatingSystem.new(name,operating_system)
       @@operating_systems[name.to_sym] = b
@@ -26,7 +24,7 @@ class UserAgent
         end
       end
     end
-  
+
     def initialize(name, operating_system)
   #    puts "loading: #{name}"
       @parent        = operating_system['parent']
@@ -38,32 +36,32 @@ class UserAgent
       @aliases       = operating_system['aliases']
       @exclude_list  = operating_system['exclude_list'] || []
       @device_type   = operating_system['device_type']
-  
+
       @@operating_systems[@parent].children << name if @parent
     end
-  
+
     def device_type
       @device_type.nil? ? self.parent.device_type : @device_type
     end
-  
+
     def manufacturer
       @manufacturer.empty? ? self.parent.manufacturer : @manufacturer
     end
-  
+
     def parent
       @@operating_systems[@parent]
     end
-  
+
     def each_child(&block)
       @children.each do |child|
         yield @@operating_systems[child.to_sym]
       end
     end
-  
+
     def mobile?
       @device_type == 'mobile'
     end
-  
+
     def alias_matched?(ua)
       @aliases.each do |a|
         if ua.downcase.index(a.downcase)
@@ -72,7 +70,7 @@ class UserAgent
       end
       false
     end
-  
+
     def exclusion_matched?(ua)
       @exclude_list.each do |exclusion|
         if ua.downcase.index(exclusion.downcase)
@@ -81,13 +79,13 @@ class UserAgent
       end
       false
     end
-  
+
     def matched?(ua)
       if alias_matched?(ua)
         if children.size > 0
           each_child do |child|
             os = child.matched?(ua)
-  	  if os
+            if os
 #              puts "checking2: #{child.name}"
               return os
             end
@@ -100,34 +98,34 @@ class UserAgent
       end
       nil
     end
-  
+
     def self.find(ua)
       @@operating_systems.each do |name,operating_system|
 #        puts "checking1: #{name}"
         if operating_system.parent.nil?
           os = operating_system.matched?(ua)
-  	if os
-#          puts "checking4: #{os.name}"
-  	  return os
+          if os
+#            puts "checking4: #{os.name}"
+            return os
           end
         end
       end
       return @@operating_systems[:unknown]
     end
-  
+
     protected
       def children
         @children ||= []
       end
-    
+
       def self.find_key(key)
         @@operating_systems[key]
       end
   end
-  
+
   class Browser
     @@browsers = {}
-  
+
     attr_reader :id, :key, :name, :manufacturer, :rendering_engine
 
     def self.load(ua)
@@ -136,7 +134,7 @@ class UserAgent
         load_browser(name,browser)
       end
     end
-    
+
     def self.load_browser(name,browser)
       b = Browser.new(name,browser)
       @@browsers[name.to_sym] = b
@@ -148,7 +146,7 @@ class UserAgent
         end
       end
     end
-  
+
     def initialize(name,browser)
       #puts "loading: #{name}"
       @parent           = browser['parent']
@@ -162,28 +160,28 @@ class UserAgent
       @browser_type     = browser['browser_type'].to_s
       @rendering_engine = browser['rendering_engine']
       @version_regex    = browser['version_regex']
-      
+
       @@browsers[@parent].children << name if @parent
     end
-    
+
     def browser_type
       @browser_type.empty? ? self.parent.browser_type : @browser_type
     end
-    
+
     def manufacturer
       @manufacturer.empty? ? self.parent.manufacturer : @manufacturer
     end
-  
+
     def parent
       @@browsers[@parent]
     end
-  
+
     def each_child(&block)
       @children.each do |child|
         yield @@browsers[child.to_sym]
       end
     end
-  
+
     def version_regex
       if @version_regex.nil? and self.parent
         parent.version_regex
@@ -191,7 +189,7 @@ class UserAgent
         @version_regex
       end
     end
-  
+
     def version(ua)
       return nil unless self.version_regex
       if ua =~ /#{self.version_regex}/
@@ -202,7 +200,7 @@ class UserAgent
         return nil
       end
     end
-  
+
     def alias_matched?(ua)
       @aliases.each do |a|
         if ua.downcase.index(a.downcase)
@@ -211,7 +209,7 @@ class UserAgent
       end
       false
     end
-  
+
     def exclusion_matched?(ua)
       @exclude_list.each do |exclusion|
         if ua.downcase.index(exclusion.downcase)
@@ -220,13 +218,13 @@ class UserAgent
       end
       false
     end
-  
+
     def matched?(ua)
       if alias_matched?(ua)
         if children.size > 0
           each_child do |child|
             b = child.matched?(ua)
-  	  if b
+            if b
   #            puts "checking2: #{b.name}"
               return b
             end
@@ -239,21 +237,21 @@ class UserAgent
       end
       nil
     end
-    
+
     def self.find(ua)
       @@browsers.each do |name,browser|
 #        puts "checking1: #{name}"
         if browser.parent.nil?
           b = browser.matched?(ua)
-  	if b
+          if b
   #          puts "checking4: #{b.name}"
-  	  return b
+            return b
           end
         end
       end
       return @@browsers[:unknown]
     end
-  
+
     protected
       def children
         @children ||= []
