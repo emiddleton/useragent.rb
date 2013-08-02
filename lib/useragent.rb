@@ -58,22 +58,9 @@ class UserAgent
       end
     end
 
-    def mobile?
-      @device_type == 'mobile'
-    end
-
-    def alias_matched?(ua)
-      @aliases.each do |a|
-        if ua.downcase.index(a.downcase)
-          return true
-        end
-      end
-      false
-    end
-
-    def exclusion_matched?(ua)
-      @exclude_list.each do |exclusion|
-        if ua.downcase.index(exclusion.downcase)
+    def list_matched?(list,ua)
+      list.each do |item|
+        if ua.downcase.index(item.downcase)
           return true
         end
       end
@@ -81,7 +68,7 @@ class UserAgent
     end
 
     def matched?(ua)
-      if alias_matched?(ua)
+      if list_matched?(@aliases,ua)
         if children.size > 0
           each_child do |child|
             os = child.matched?(ua)
@@ -91,7 +78,7 @@ class UserAgent
             end
           end
         end
-        unless exclusion_matched?(ua)
+        unless list_matched?(@exclude_list,ua)
 #          puts "checking3: #{self.name}"
           return self
         end
@@ -201,18 +188,9 @@ class UserAgent
       end
     end
 
-    def alias_matched?(ua)
-      @aliases.each do |a|
-        if ua.downcase.index(a.downcase)
-          return true
-        end
-      end
-      false
-    end
-
-    def exclusion_matched?(ua)
-      @exclude_list.each do |exclusion|
-        if ua.downcase.index(exclusion.downcase)
+    def list_matched?(list,ua)
+      list.each do |item|
+        if ua.downcase.index(item.downcase)
           return true
         end
       end
@@ -220,7 +198,7 @@ class UserAgent
     end
 
     def matched?(ua)
-      if alias_matched?(ua)
+      if list_matched?(@aliases,ua)
         if children.size > 0
           each_child do |child|
             b = child.matched?(ua)
@@ -230,7 +208,7 @@ class UserAgent
             end
           end
         end
-        unless exclusion_matched?(ua)
+        unless list_matched?(@exclude_list,ua)
   #        puts "checking3: #{self.name}"
           return self
         end
